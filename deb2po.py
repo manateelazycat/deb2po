@@ -102,7 +102,6 @@ def deb2po():
             longDescList = docs.keys()
             longDescList.remove("short")
             for longDescKey in sorted(longDescList):
-                print "*** " + longDescKey
                 poFilecontent += '''msgctxt \"%s\"\n''' % (longDescKey)
                 poFilecontent += '''msgid \"\"\n'''
                 for longDesc in docs[longDescKey]:
@@ -117,6 +116,8 @@ def deb2po():
             poFile = open(poFilepath, "w")            
             poFile.write(poFilecontent)
             poFile.close()
+     
+    print "Convert %s successful." % (debFilename)
             
 if __name__ == "__main__":
     deb2po()
