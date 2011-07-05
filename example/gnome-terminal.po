@@ -1,17 +1,16 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Chinese (China) description translation of gnome-terminal
+# Copyright (C) 2011 Free Software Foundation, Inc.
+# This file is distributed under the same license as the gnome-terminal package.
+# Aron Xu <happyaron.xu@gmail.com>, 2011.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: gnome-terminal ddtp-core\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-07-05 01:00+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2011-07-05 10:13+0800\n"
+"Last-Translator: Aron Xu <happyaron.xu@gmail.com>\n"
+"Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -22,7 +21,7 @@ msgstr ""
 #: short
 msgctxt "short"
 msgid "The GNOME terminal emulator application"
-msgstr ""
+msgstr "GNOME 虚拟终端"
 
 #. Translators: This is the long description part 1.
 #.
@@ -36,6 +35,9 @@ msgid ""
 " - Run any application that is designed to run on VT102, VT220, and xterm"
 " terminals.\n"
 msgstr ""
+"GNOME 终端是一个终端虚拟程序，可被用于执行以下操作：\n"
+" - 在 GNOME 环境中访问 UNIX shell\n"
+" - 运行为 VT102、VT220 和 xterm 终端设计的程序\n"
 
 #. Translators: This is the long description part 2.
 #.
@@ -46,3 +48,4 @@ msgid ""
 "GNOME Terminal features the ability to use multiple terminals in a single"
 "window (tabs) and profiles support.\n"
 msgstr ""
+"GNOME 终端最具特色的功能是支持多窗口和多标签页，也支持多个配置文件。\n"

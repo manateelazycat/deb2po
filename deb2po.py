@@ -24,42 +24,71 @@ import re
 import sys
 import os
 
-header = '''
+copyrightTemplate = '''# Chinese (China) description translation of %s
+# Copyright (C) 2011 Free Software Foundation, Inc.
+# This file is distributed under the same license as the %s package.
+# Aron Xu <happyaron.xu@gmail.com>, 2011.
+#'''
+
+pootleTemplate = "\n#, fuzzy"
+
+headerTemplate = '''
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION"
-"Report-Msgid-Bugs-To: "
-"POT-Creation-Date: 2011-07-05 01:00+0800"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>"
-"Language-Team: LANGUAGE <LL@li.org>"
-"MIME-Version: 1.0"
-"Content-Type: text/plain; charset=UTF-8"
-"Content-Transfer-Encoding: 8bit"\n
+"Project-Id-Version: %s ddtp-core\\n"
+"Report-Msgid-Bugs-To: \\n"
+"POT-Creation-Date: 2011-07-05 01:00+0800\\n"
+"PO-Revision-Date: 2011-07-05 10:13+0800\\n"
+"Last-Translator: Aron Xu <happyaron.xu@gmail.com>\\n"
+"Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\\n"
+"MIME-Version: 1.0\\n"
+"Content-Type: text/plain; charset=UTF-8\\n"
+"Content-Transfer-Encoding: 8bit\\n"\n
+'''
+
+shortTemplate = '''#. Translators: This is the short description.
+#.
+#: %s
+#: short
+'''
+
+longTemplate = '''#. Translators: This is the long description part %s.
+#.
+#: %s
+#: long part %s
 '''
 
 def deb2po():
     
     
-    '''Convert .debian to .po format.'''
+    '''Convert .deepin to .po format.'''
     # Init rules.
-    poRe = re.compile("\.debian")
+    poRe = re.compile("\.deepin")
+    packageRe = re.compile("([^\.]+)\.deepin")
     langRe = re.compile("-([a-zA-Z_]+).+")
     shortDescRe = re.compile("^Description(-[^:]+)?:\s([^\n]+)")
     longDescRe = re.compile("^ ([^\.][^\n]+)")
-    breakLineRe = re.compile("^ \.")
+    segmentIndexRe = re.compile("long([0-9]+)")
+    breakRe = re.compile("[^:]+(\：|:)")
+    returnRe = re.compile("^ (\-|\*)\s")
+    segmentRe = re.compile("^ \.")
     commentRe = re.compile("#[^\n]+")
     
-    # Get *.debian filename.
+    # Get *.deepin filename.
     debFilename = sys.argv[1]
     
     # Get *.po filename.
     poFilename = poRe.sub(".po", debFilename)
     
+    # Get package name.
+    packageName = packageRe.match(debFilename).group(1)
+    
     # Convert format.
     poFileDict = {}
     lang = ""
-    longIndex = 1
+    segmentIndex = 1
+    returnMark = False
+    
     for line in open(debFilename).readlines():
         lineContent = line.rstrip("\n")
         if shortDescRe.match(lineContent):
@@ -69,7 +98,10 @@ def deb2po():
                 lang = "en"
             else:
                 lang = langRe.match(langStr).group(1)
-            longIndex = 1
+                
+            # Init.
+            segmentIndex = 1
+            returnMark = False
             
             if not poFileDict.has_key(lang):
                 poFileDict[lang] = {}
@@ -78,41 +110,109 @@ def deb2po():
             (poFileDict[lang])["short"] = shortDesc
         elif longDescRe.match(lineContent):
             longDesc = longDescRe.match(lineContent).group(1)
-            longKey = "long" + str(longIndex)
+            
+            # Add \n if last character is : or ：
+            if breakRe.match(longDesc):
+                longDesc = longDesc + "\\n"
+            
+            if returnMark:
+                # Add \n in previous line if current line and previous line 
+                # both beginning with '-' or '*'
+                if returnRe.match(longDesc):
+                    returnMark = True
+                    lastLine = (poFileDict[lang])[longKey].pop()
+                    (poFileDict[lang])[longKey].append(lastLine + "\\n")
+                # Add blank at beginning if previous line beginning with '-' or '*'
+                # but current line is not.
+                else:
+                    longDesc = " " + longDesc
+            else:                    
+                # Mark returnMark if current line  beginning with '-' or '*'
+                # and previous line is not.
+                if returnRe.match(longDesc):
+                    returnMark = True
+
+            longKey = "long" + str(segmentIndex)
             
             if not (poFileDict[lang]).has_key(longKey):
                 (poFileDict[lang])[longKey] = []
             
             (poFileDict[lang])[longKey].append(longDesc)
-        elif breakLineRe.match(lineContent):
-            longIndex += 1
+        elif segmentRe.match(lineContent):
+            # Reset mark if reach '.'
+            returnMark = False
             
+            # Update segment index.
+            segmentIndex += 1
+            
+    # Append \n in long description:
+    for (lang, docs) in poFileDict.items():
+        if docs["short"] != "<trans>":
+            for (descType, desc) in docs.items():
+                if descType != "short":
+                    lastLine = (poFileDict[lang])[descType].pop()
+                    (poFileDict[lang])[descType].append(lastLine + "\\n")
+                    
     # Generate *.po files.
     for (lang, docs) in poFileDict.items():
         if docs["short"] != "<trans>":
             # Fill *.po content.
             poFilecontent = ""
             
-            poFilecontent += header
+            # Fill copyright string.
+            poFilecontent += copyrightTemplate % (packageName, packageName)
             
+            # Fill pootle string.
+            if lang == "en":
+                poFilecontent += pootleTemplate
+
+            # Fill header string.
+            poFilecontent += headerTemplate % (packageName)
+            
+            # Fill short template.
+            poFilecontent += shortTemplate % (packageName)
+            
+            # Fill short description.
             poFilecontent += '''msgctxt \"short\"\n'''
-            poFilecontent += '''msgid \"%s\"\n''' % (docs["short"])
-            poFilecontent += '''msgstr \"\"\n\n'''
+            if lang == "en":
+                poFilecontent += '''msgid \"%s\"\n''' % (docs["short"])
+                poFilecontent += '''msgstr \"\"\n\n'''
+            else:
+                poFilecontent += '''msgid \"%s\"\n''' % ((poFileDict["en"])["short"])
+                poFilecontent += '''msgstr \"%s\"\n\n''' % (docs["short"])
             
+            # Fill long description.
             longDescList = docs.keys()
             longDescList.remove("short")
             for longDescKey in sorted(longDescList):
+                index = segmentIndexRe.match(longDescKey).group(1)
+                # Fill long template.
+                poFilecontent += longTemplate % (index, packageName, index)
+                
                 poFilecontent += '''msgctxt \"%s\"\n''' % (longDescKey)
                 poFilecontent += '''msgid \"\"\n'''
-                for longDesc in docs[longDescKey]:
-                    poFilecontent += '''\"%s\"\n''' % (longDesc)
-                poFilecontent += '''msgstr \"\"\n\n'''
+                if lang == "en":
+                    for longDesc in docs[longDescKey]:
+                        poFilecontent += '''\"%s\"\n''' % (longDesc)
+                    poFilecontent += '''msgstr \"\"\n\n'''
+                else:
+                    for longDesc in (poFileDict["en"])[longDescKey]:
+                        poFilecontent += '''\"%s\"\n''' % (longDesc)
+                    poFilecontent += '''msgstr \"\"\n'''
+                    for longDesc in docs[longDescKey]:
+                        poFilecontent += '''\"%s\"\n''' % (longDesc)
+                    poFilecontent += "\n"
             
-            poDir = "./" + lang
+            # Create file.
+            if lang == "en":
+                poDir = "."
+            else:
+                poDir = "./" + lang
             if not os.path.exists(poDir):
                 os.makedirs(poDir)
-                
-            poFilepath = "./%s/%s" % (lang, poFilename)
+            
+            # Write content to *.po file.
+            poFilepath = "%s/%s" % (poDir, poFilename)
             poFile = open(poFilepath, "w")            
             poFile.write(poFilecontent)
             poFile.close()
