@@ -59,8 +59,6 @@ longTemplate = '''#. Translators: This is the long description part %s.
 '''
 
 def deb2po():
-    
-    
     '''Convert .debian to .po format.'''
     # Init rules.
     poRe = re.compile("\.debian")
@@ -92,7 +90,7 @@ def deb2po():
             
         # Append line.
         lines.append(line)
-    
+        
     # Convert format.
     poFileDict = {}
     lang = ""
@@ -168,8 +166,27 @@ def deb2po():
                     lastLine = (poFileDict[lang])[descType].pop()
                     (poFileDict[lang])[descType].append(lastLine.rstrip(" ") + "\\n")
                     
+    # Check description segment number in different language.
+    longSegmentNumList = []
+    origianlSegmentNum = 0
+    for (lang, docs) in poFileDict.items():
+        # Append segment number.
+        descList = docs.keys()
+        descList.remove("short")
+        descNum = len(descList)
+        longSegmentNumList.append((lang, descNum))
+        
+        if lang == "en":
+            origianlSegmentNum = descNum
+        
+    for (lang, longDescNum) in longSegmentNumList:
+        if longDescNum != origianlSegmentNum:
+            print "* WARNING: The segment number of ./%s/%s/%s.po (%s) is different with origianl (%s)." % (packageName, lang, packageName, longDescNum, origianlSegmentNum)
+    
     # Generate *.po files.
     for (lang, docs) in poFileDict.items():
+        
+        
         if docs["short"] != "<trans>":
             # Fill *.po content.
             poFilecontent = ""
@@ -220,10 +237,10 @@ def deb2po():
             
             # Create file.
             if lang == "en":
-                poDir = "./pot"
+                poDir = "./%s/pot" % (packageName)
                 poFilename = poRe.sub(".pot", debFilename)
             else:
-                poDir = "./" + lang
+                poDir = "./%s/%s" % (packageName, lang)
                 poFilename = poRe.sub(".po", debFilename)
             if not os.path.exists(poDir):
                 os.makedirs(poDir)
