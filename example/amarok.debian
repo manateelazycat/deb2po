@@ -1,0 +1,41 @@
+# Source: amarok
+# Package(s): amarok
+# Prioritize: 50
+# Versions: amarok (2.4.1-2), amarok (2.2.2-1), amarok (2.3.0-1), amarok (2.3.0-2), amarok (2.3.1-1), amarok (2.4.0-1), amarok (2.4.0-2), amarok (2.4.1-1)
+# This Description is active
+# This Description is owned
+Description: easy to use media player based on the KDE Platform
+ Amarok is a powerful music player with an intuitive interface. It makes
+ playing the music you love and discovering new music easier than ever before
+ and it looks good doing it! Amarok is based on the powerful Qt4 / KDE4
+ Platform and nicely integrates with KDE desktop.
+ .
+ Much work has been invested into integrating Amarok 2 with various Web
+ services:
+   - Ampache
+   - Jamendo Service
+   - Last.fm
+   - Librivox
+   - MP3tunes
+   - Magnatune
+   - OPML Podcast Directory
+ .
+ Amarok comes with a lot of features including but not limited to:
+   - Scripts - enhance your Amarok experience with community developed scripts.
+   - Dynamic Playlists - create playlists that automatically update.
+   - Context View - customize interface with the Plasma powered Context View.
+   - PopUp Dropper - simplify drag&drop actions with revolutionary menu system.
+   - Multiple Language Translations
+   - Collection Management - organizing your music collection has never been
+     easier with Amarok's powerful tagging, renaming, and sorting abilities.
+   - Database Importing - import collections from Amarok 1.4 or iTunes.
+   - Scriptable Services - integrate other web services into Amarok.
+Description-zh_CN: <trans>
+ <trans>
+ .
+ <trans>
+ .
+ <trans>
+#
+# other Descriptions of the amarok package with a translation in zh_CN:
+# 

@@ -27,7 +27,7 @@ import os
 copyrightTemplate = '''# Chinese (China) description translation of %s
 # Copyright (C) 2011 Free Software Foundation, Inc.
 # This file is distributed under the same license as the %s package.
-# Aron Xu <happyaron.xu@gmail.com>, 2011.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #'''
 
 pootleTemplate = "\n#, fuzzy"
@@ -36,10 +36,10 @@ headerTemplate = '''
 msgid ""
 msgstr ""
 "Project-Id-Version: %s ddtp-core\\n"
-"Report-Msgid-Bugs-To: \\n"
+"Report-Msgid-Bugs-To: happyaron.xu@gmail.com\\n"
 "POT-Creation-Date: 2011-07-05 01:00+0800\\n"
 "PO-Revision-Date: 2011-07-05 10:13+0800\\n"
-"Last-Translator: Aron Xu <happyaron.xu@gmail.com>\\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\\n"
 "MIME-Version: 1.0\\n"
 "Content-Type: text/plain; charset=UTF-8\\n"
@@ -61,24 +61,23 @@ longTemplate = '''#. Translators: This is the long description part %s.
 def deb2po():
     
     
-    '''Convert .deepin to .po format.'''
+    '''Convert .debian to .po format.'''
     # Init rules.
-    poRe = re.compile("\.deepin")
-    packageRe = re.compile("([^\.]+)\.deepin")
+    poRe = re.compile("\.debian")
+    packageRe = re.compile("([^\.]+)\.debian")
     langRe = re.compile("-([a-zA-Z_]+).+")
     shortDescRe = re.compile("^Description(-[^:]+)?:\s([^\n]+)")
     longDescRe = re.compile("^ ([^\.][^\n]+)")
     segmentIndexRe = re.compile("long([0-9]+)")
     breakRe = re.compile("[^:]+(\：|:)")
-    returnRe = re.compile("^ (\-|\*)\s")
+    returnRe = re.compile("^\s+(\-|\*)\s")
     segmentRe = re.compile("^ \.")
+    quotationRe = re.compile("\"")
     commentRe = re.compile("#[^\n]+")
     
-    # Get *.deepin filename.
-    debFilename = sys.argv[1]
-    
-    # Get *.po filename.
-    poFilename = poRe.sub(".po", debFilename)
+    # Get *.debian filename.
+    debFilepath = sys.argv[1]
+    debFilename = os.path.basename(debFilepath)    
     
     # Get package name.
     packageName = packageRe.match(debFilename).group(1)
@@ -89,7 +88,7 @@ def deb2po():
     segmentIndex = 1
     returnMark = False
     
-    for line in open(debFilename).readlines():
+    for line in open(debFilepath).readlines():
         lineContent = line.rstrip("\n")
         if shortDescRe.match(lineContent):
             langStr = shortDescRe.match(lineContent).group(1)
@@ -107,6 +106,7 @@ def deb2po():
                 poFileDict[lang] = {}
             
             shortDesc =  shortDescRe.match(lineContent).group(2)
+            shortDesc = quotationRe.sub("\\\"", shortDesc)
             (poFileDict[lang])["short"] = shortDesc
         elif longDescRe.match(lineContent):
             longDesc = longDescRe.match(lineContent).group(1)
@@ -137,6 +137,7 @@ def deb2po():
             if not (poFileDict[lang]).has_key(longKey):
                 (poFileDict[lang])[longKey] = []
             
+            longDesc = quotationRe.sub("\\\"", longDesc)
             (poFileDict[lang])[longKey].append(longDesc)
         elif segmentRe.match(lineContent):
             # Reset mark if reach '.'
@@ -205,9 +206,11 @@ def deb2po():
             
             # Create file.
             if lang == "en":
-                poDir = "."
+                poDir = "./pot"
+                poFilename = poRe.sub(".pot", debFilename)
             else:
                 poDir = "./" + lang
+                poFilename = poRe.sub(".po", debFilename)
             if not os.path.exists(poDir):
                 os.makedirs(poDir)
             
@@ -217,7 +220,7 @@ def deb2po():
             poFile.write(poFilecontent)
             poFile.close()
      
-    print "Convert %s successful." % (debFilename)
+    print "Convert %s successful." % (debFilepath)
             
 if __name__ == "__main__":
     deb2po()
