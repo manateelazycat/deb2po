@@ -109,11 +109,11 @@ def deb2po():
             shortDesc = quotationRe.sub("\\\"", shortDesc)
             (poFileDict[lang])["short"] = shortDesc
         elif longDescRe.match(lineContent):
-            longDesc = longDescRe.match(lineContent).group(1)
+            longDesc = longDescRe.match(lineContent).group(1) + " "
             
             # Add \n if last character is : or ：
             if breakRe.match(longDesc):
-                longDesc = longDesc + "\\n"
+                longDesc = longDesc.rstrip(" ") + "\\n"
             
             if returnMark:
                 # Add \n in previous line if current line and previous line 
@@ -121,11 +121,7 @@ def deb2po():
                 if returnRe.match(longDesc):
                     returnMark = True
                     lastLine = (poFileDict[lang])[longKey].pop()
-                    (poFileDict[lang])[longKey].append(lastLine + "\\n")
-                # Add blank at beginning if previous line beginning with '-' or '*'
-                # but current line is not.
-                else:
-                    longDesc = " " + longDesc
+                    (poFileDict[lang])[longKey].append(lastLine.rstrip(" ") + "\\n")
             else:                    
                 # Mark returnMark if current line  beginning with '-' or '*'
                 # and previous line is not.
@@ -152,7 +148,7 @@ def deb2po():
             for (descType, desc) in docs.items():
                 if descType != "short":
                     lastLine = (poFileDict[lang])[descType].pop()
-                    (poFileDict[lang])[descType].append(lastLine + "\\n")
+                    (poFileDict[lang])[descType].append(lastLine.rstrip(" ") + "\\n")
                     
     # Generate *.po files.
     for (lang, docs) in poFileDict.items():
