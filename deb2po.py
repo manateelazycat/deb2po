@@ -74,6 +74,7 @@ def deb2po():
     segmentRe = re.compile("^ \.")
     quotationRe = re.compile("\"")
     commentRe = re.compile("#[^\n]+")
+    sourceRe = re.compile("^#\sSource:")
     
     # Get *.debian filename.
     debFilepath = sys.argv[1]
@@ -82,13 +83,23 @@ def deb2po():
     # Get package name.
     packageName = packageRe.match(debFilename).group(1)
     
+    # Remove duplicate description.
+    lines = []
+    for line in open(debFilepath).readlines():
+        # Clean previous source segment if match sourceRe.
+        if sourceRe.match(line):
+            lines = []
+            
+        # Append line.
+        lines.append(line)
+    
     # Convert format.
     poFileDict = {}
     lang = ""
     segmentIndex = 1
     returnMark = False
     
-    for line in open(debFilepath).readlines():
+    for line in lines:
         lineContent = line.rstrip("\n")
         if shortDescRe.match(lineContent):
             langStr = shortDescRe.match(lineContent).group(1)
@@ -109,12 +120,19 @@ def deb2po():
             shortDesc = quotationRe.sub("\\\"", shortDesc)
             (poFileDict[lang])["short"] = shortDesc
         elif longDescRe.match(lineContent):
-            longDesc = longDescRe.match(lineContent).group(1) + " "
+            longDesc = longDescRe.match(lineContent).group(1)
+            
+            # Strip beginning blank if current line not beginning with - or *
+            if returnRe.match(longDesc) == None:
+                longDesc = longDesc.strip(" ")
+                
+            # Add blank at line end.
+            longDesc = longDesc + " "
             
             # Add \n if last character is : or ：
             if breakRe.match(longDesc):
                 longDesc = longDesc.rstrip(" ") + "\\n"
-            
+                
             if returnMark:
                 # Add \n in previous line if current line and previous line 
                 # both beginning with '-' or '*'

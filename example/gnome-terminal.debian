@@ -19,3 +19,24 @@ Description-zh_CN.UTF-8: GNOME 虚拟终端
   - 运行为 VT102、VT220 和 xterm 终端设计的程序
  .
  GNOME 终端最具特色的功能是支持多窗口和多标签页，也支持多个配置文件。
+
+# Source: gnome-terminal
+# Package(s): gnome-terminal
+# Prioritize: 50
+# This Description is active
+# This Description is owned
+Description: The GNOME terminal emulator application
+ GNOME Terminal is a terminal emulation application that you can use to
+ perform the following actions:
+  - Access a UNIX shell in the GNOME environment.
+  - Run any application that is designed to run on VT102, VT220, and xterm
+ terminals.
+ .
+ GNOME Terminal features the ability to use multiple terminals in a single
+ window (tabs) and profiles support.
+Description-zh_CN.UTF-8: GNOME 虚拟终端
+ GNOME 终端是一个终端虚拟程序，可被用于执行以下操作：
+  - 在 GNOME 环境中访问 UNIX shell
+  - 运行为 VT102、VT220 和 xterm 终端设计的程序
+ .
+ GNOME 终端最具特色的功能是支持多窗口和多标签页，也支持多个配置文件。
