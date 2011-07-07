@@ -32,9 +32,12 @@ headerTemplate = '''
 # This Description is owned
 '''
 
-def po2deb():
+def po2deb(poFilepath):
     '''Convert .po to .debian format.'''
     # Init rule.
+    poRe = re.compile("\.po")
+    packageRe = re.compile("([^\.]+)\.po")
+    langRe = re.compile("^\"Language:\s([^\\\n]+)\\\\n")
     shortCtxtRe = re.compile("^msgctxt \"short")
     longCtxtRe = re.compile("^msgctxt \"long")
     shortEnDescRe = re.compile("^msgid\s\"(.*)\"$")
@@ -43,63 +46,62 @@ def po2deb():
     longDescRe = re.compile("^\"(.*)\"$")
     quotationRe = re.compile(r"\\\"")
     
-    # Get po directory.
-    poDir = (sys.argv[1]).rstrip("/")
-    packageName = os.path.basename(poDir)
+    # Get *.po filename.
+    poFilename = os.path.basename(poFilepath)    
     
-    # Get files.
-    poFiles = []
-    for (pathName, dirName, fileName) in os.walk(poDir):
-        if os.path.basename(pathName) != packageName:
-            poFiles.append((os.path.basename(pathName), fileName[0]))
+    # Get package name.
+    packageName = packageRe.match(poFilename).group(1)
     
-    # Pick .po information. 
-    poInfoDict = {}
-    for (dirname, filename) in poFiles:
-        # Init.
-        descType = ""
-        longIndex = 1
-        longDescKey = ""
-        otherLangMark = False
+    # Get lines.
+    lines = open(poFilepath).readlines()
     
-        if dirname == "pot":
-            lang = "en"
-        else:
-            lang = dirname
-        
-        if not poInfoDict.has_key(lang):
-            poInfoDict[lang] = {}
-        
-        poFilepath = "%s/%s/%s" % (poDir, dirname, filename)
-        # Handle English content.
-        for line in open(poFilepath).readlines():
-            lineContent = line.rstrip("\n")
+    # Search language information.
+    otherLang = ""
+    while otherLang == "":
+        lineContent = lines.pop(0)
+        lineContent = lineContent.rstrip("\n")
+        if langRe.match(lineContent):
+            otherLang = langRe.match(lineContent).group(1)
             
-            if shortCtxtRe.match(lineContent):
-                descType = "short"
-            elif longCtxtRe.match(lineContent):
-                descType = "long"
-                longDescKey = "long" + str(longIndex)
-                longIndex += 1
-                otherLangMark = False
-            elif descType == "long" and otherLangRe.match(lineContent):
-                otherLangMark = True
-            else:
-                if descType == "short":
-                    if lang == "en":
-                       if shortEnDescRe.match(lineContent):
-                           (poInfoDict[lang])["short"] = shortEnDescRe.match(lineContent).group(1)
-                    elif shortOtherDescRe.match(lineContent):
-                        (poInfoDict[lang])["short"] = shortOtherDescRe.match(lineContent).group(1)
-                elif descType == "long":
-                    if (lang == "en" or otherLangMark) and longDescRe.match(lineContent):
-                        longLine = longDescRe.match(lineContent).group(1) 
-                        longLine = quotationRe.sub("\"", longLine)
+    # Pick .po information. 
+    poInfoDict = {"en" : {},
+                  otherLang : {}}
+    descType = ""
+    longIndex = 1
+    longDescKey = ""
+    otherLangMark = False
+
+    for line in lines:
+        lineContent = line.rstrip("\n")
+        
+        if shortCtxtRe.match(lineContent):
+            descType = "short"
+        elif longCtxtRe.match(lineContent):
+            descType = "long"
+            longDescKey = "long" + str(longIndex)
+            longIndex += 1
+            otherLangMark = False
+        elif descType == "long" and otherLangRe.match(lineContent):
+            otherLangMark = True
+        else:
+            if descType == "short":
+                if shortEnDescRe.match(lineContent):
+                    (poInfoDict["en"])["short"] = shortEnDescRe.match(lineContent).group(1)
+                elif shortOtherDescRe.match(lineContent):
+                    (poInfoDict[otherLang])["short"] = shortOtherDescRe.match(lineContent).group(1)
+            elif descType == "long":
+                if longDescRe.match(lineContent):
+                    if otherLangMark:
+                        language = otherLang
+                    else:
+                        language = "en"
+                    longLine = longDescRe.match(lineContent).group(1) 
+                    longLine = quotationRe.sub("\"", longLine)
+                    
+                    if not (poInfoDict[language]).has_key(longDescKey):
+                        (poInfoDict[language])[longDescKey] = []
                         
-                        if not (poInfoDict[lang]).has_key(longDescKey):
-                            (poInfoDict[lang])[longDescKey] = []
-                            
-                        (poInfoDict[lang])[longDescKey].append(longLine)
+                    (poInfoDict[language])[longDescKey].append(longLine)
                         
     # Generate .debian file content.
     debFilecontent = headerTemplate % (packageName, packageName)
@@ -109,7 +111,9 @@ def po2deb():
         debFilecontent += genDescription(lang, docs)
         
     # Write content to *.debian file.
-    debFilepath = "%s.debian" % (packageName)
+    if not os.path.exists("./lang"):
+        os.makedirs("./lang")
+    debFilepath = "./lang/%s.debian" % (packageName) 
     debFile = open(debFilepath, "w")            
     debFile.write(debFilecontent)
     debFile.close()
@@ -151,4 +155,7 @@ def genDescription(lang, docs):
     return content
     
 if __name__ == "__main__":
-    po2deb()
+    if len(sys.argv) == 2:
+        po2deb(sys.argv[1])
+    else:
+        print "./po2deb.py foo.po"

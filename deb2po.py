@@ -41,6 +41,7 @@ msgstr ""
 "PO-Revision-Date: 2011-07-05 10:13+0800\\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\\n"
+"Language: %s\\n"
 "MIME-Version: 1.0\\n"
 "Content-Type: text/plain; charset=UTF-8\\n"
 "Content-Transfer-Encoding: 8bit\\n"\n
@@ -58,10 +59,10 @@ longTemplate = '''#. Translators: This is the long description part %s.
 #: long part %s
 '''
 
-def deb2po():
+def deb2po(debFilepath):
     '''Convert .debian to .po format.'''
     # Init rules.
-    poRe = re.compile("\.debian")
+    debPo = re.compile("\.debian")
     packageRe = re.compile("([^\.]+)\.debian")
     langRe = re.compile("-([a-zA-Z_]+).+")
     shortDescRe = re.compile("^Description(-[^:]+)?:\s([^\n]+)")
@@ -75,7 +76,6 @@ def deb2po():
     sourceRe = re.compile("^#\sSource:")
     
     # Get *.debian filename.
-    debFilepath = sys.argv[1]
     debFilename = os.path.basename(debFilepath)    
     
     # Get package name.
@@ -199,7 +199,10 @@ def deb2po():
                 poFilecontent += pootleTemplate
 
             # Fill header string.
-            poFilecontent += headerTemplate % (packageName)
+            if lang == "en":
+                poFilecontent += headerTemplate % (packageName, "")
+            else:
+                poFilecontent += headerTemplate % (packageName, lang)
             
             # Fill short template.
             poFilecontent += shortTemplate % (packageName)
@@ -237,11 +240,11 @@ def deb2po():
             
             # Create file.
             if lang == "en":
-                poDir = "./%s/pot" % (packageName)
-                poFilename = poRe.sub(".pot", debFilename)
+                poDir = "./pot"
+                poFilename = debPo.sub(".pot", debFilename)
             else:
-                poDir = "./%s/%s" % (packageName, lang)
-                poFilename = poRe.sub(".po", debFilename)
+                poDir = "./" + lang
+                poFilename = debPo.sub(".po", debFilename)
             if not os.path.exists(poDir):
                 os.makedirs(poDir)
             
@@ -254,4 +257,7 @@ def deb2po():
     print "Convert %s successful." % (debFilepath)
             
 if __name__ == "__main__":
-    deb2po()
+    if len(sys.argv) == 2:
+        deb2po(sys.argv[1])
+    else:
+        print "./deb2po.py foo.debian"
