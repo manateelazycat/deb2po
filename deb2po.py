@@ -114,7 +114,7 @@ def deb2po():
             if not poFileDict.has_key(lang):
                 poFileDict[lang] = {}
             
-            shortDesc =  shortDescRe.match(lineContent).group(2)
+            shortDesc = shortDescRe.match(lineContent).group(2)
             shortDesc = quotationRe.sub("\\\"", shortDesc)
             (poFileDict[lang])["short"] = shortDesc
         elif longDescRe.match(lineContent):
