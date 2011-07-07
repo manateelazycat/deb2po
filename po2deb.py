@@ -75,13 +75,17 @@ def po2deb(poFilepath):
         lineContent = line.rstrip("\n")
         
         if shortCtxtRe.match(lineContent):
+            # Mark short type.
             descType = "short"
         elif longCtxtRe.match(lineContent):
+            # Mark long type 
             descType = "long"
+            
             longDescKey = "long" + str(longIndex)
             longIndex += 1
             otherLangMark = False
         elif descType == "long" and otherLangRe.match(lineContent):
+            # Mark other language.
             otherLangMark = True
         else:
             if descType == "short":
@@ -159,3 +163,5 @@ if __name__ == "__main__":
         po2deb(sys.argv[1])
     else:
         print "./po2deb.py foo.po"
+
+#  LocalWords:  Deepin po debian msgctxt msgid msgstr lang

@@ -181,7 +181,7 @@ def deb2po(debFilepath):
         
     for (lang, longDescNum) in longSegmentNumList:
         if longDescNum != origianlSegmentNum:
-            print "* WARNING: The segment number of ./%s/%s/%s.po (%s) is different with origianl (%s)." % (packageName, lang, packageName, longDescNum, origianlSegmentNum)
+            print "* WARNING: The segment number of ./%s/%s/%s.po (%s) is different with original (%s)." % (packageName, lang, packageName, longDescNum, origianlSegmentNum)
     
     # Generate *.po files.
     for (lang, docs) in poFileDict.items():
@@ -261,3 +261,5 @@ if __name__ == "__main__":
         deb2po(sys.argv[1])
     else:
         print "./deb2po.py foo.debian"
+
+#  LocalWords:  pootle msgctxt
