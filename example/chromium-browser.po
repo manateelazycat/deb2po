@@ -1,0 +1,52 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-07-07 07:14+0200\n"
+"PO-Revision-Date: 2011-07-10 07:10+0200\n"
+"Last-Translator: Aron <happyaron.xu@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Pootle 2.1.6\n"
+
+#. Translators: This is the short description.
+#: chromium-browser
+#: short
+msgctxt "short"
+msgid "Chromium browser - transitional dummy package"
+msgstr "Chromium 浏览器(过渡包)"
+
+#. Translators: This is the long description part 1.
+#: chromium-browser
+#: long
+#: part
+#: 1
+msgctxt "long1"
+msgid "Chromium is an open-source browser project that aims to build a safer, "
+"faster, and more stable way for all Internet users to experience the web.\n"
+msgstr "Chromium 是一个致力于为所有互联网用户构建一个更安全、更快捷和更稳定的网络冲浪体验的开源浏览器软件工程。\n"
+
+#. Translators: This is the long description part 2.
+#: chromium-browser
+#: long
+#: part
+#: 2
+msgctxt "long2"
+msgid "Chromium serves as a base for Google Chrome, which is Chromium rebranded "
+"(name and logo) with very few additions such as usage tracking and an auto-"
+"updater system.\n"
+msgstr "Google Chrome 是在 Chromium "
+"的基础上衍生而来的。它使用了一个单独的名称和徽标，并且添加了极少量的额外功能，例如使用情况跟踪和自动更新。\n"
+
+#. Translators: This is the long description part 3.
+#: chromium-browser
+#: long
+#: part
+#: 3
+msgctxt "long3"
+msgid "This package contains the Chromium browser \"test\" transitional dummy package\n"
+msgstr "本软件包是 Chromium 浏览器的一个用于在系统升级时进行过渡的软件包。\n"

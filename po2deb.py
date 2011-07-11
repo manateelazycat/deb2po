@@ -37,12 +37,13 @@ def po2deb(poFilepath):
     # Init rule.
     poRe = re.compile("\.po")
     packageRe = re.compile("([^\.]+)\.po")
-    langRe = re.compile("^\"Language:\s([^\\\n]+)\\\\n")
+    languageRe = re.compile("^\"Language:\s([^\\\n]+)\\\\n")
     shortCtxtRe = re.compile("^msgctxt \"short")
     longCtxtRe = re.compile("^msgctxt \"long")
     shortEnDescRe = re.compile("^msgid\s\"(.*)\"$")
     shortOtherDescRe = re.compile("^msgstr\s\"(.*)\"$")
-    otherLangRe = re.compile("^msgstr \"\"")
+    langRe = re.compile("^msgid\s+(.*)")
+    otherLangRe = re.compile("^msgstr\s+(.*)")
     longDescRe = re.compile("^\"(.*)\"$")
     quotationRe = re.compile(r"\\\"")
     
@@ -60,8 +61,8 @@ def po2deb(poFilepath):
     while otherLang == "":
         lineContent = lines.pop(0)
         lineContent = lineContent.rstrip("\n")
-        if langRe.match(lineContent):
-            otherLang = langRe.match(lineContent).group(1)
+        if languageRe.match(lineContent):
+            otherLang = languageRe.match(lineContent).group(1)
             
     # Pick .po information. 
     poInfoDict = {"en" : {},
@@ -84,28 +85,31 @@ def po2deb(poFilepath):
             longDescKey = "long" + str(longIndex)
             longIndex += 1
             otherLangMark = False
-        elif descType == "long" and otherLangRe.match(lineContent):
-            # Mark other language.
-            otherLangMark = True
-        else:
-            if descType == "short":
-                if shortEnDescRe.match(lineContent):
-                    (poInfoDict["en"])["short"] = shortEnDescRe.match(lineContent).group(1)
-                elif shortOtherDescRe.match(lineContent):
-                    (poInfoDict[otherLang])["short"] = shortOtherDescRe.match(lineContent).group(1)
-            elif descType == "long":
-                if longDescRe.match(lineContent):
-                    if otherLangMark:
-                        language = otherLang
-                    else:
-                        language = "en"
-                    longLine = longDescRe.match(lineContent).group(1) 
-                    longLine = quotationRe.sub("\"", longLine)
-                    
-                    if not (poInfoDict[language]).has_key(longDescKey):
-                        (poInfoDict[language])[longDescKey] = []
-                        
-                    (poInfoDict[language])[longDescKey].append(longLine)
+        elif descType == "short":
+            if shortEnDescRe.match(lineContent):
+                (poInfoDict["en"])["short"] = shortEnDescRe.match(lineContent).group(1)
+            elif shortOtherDescRe.match(lineContent):
+                (poInfoDict[otherLang])["short"] = shortOtherDescRe.match(lineContent).group(1)
+        elif descType == "long":
+            if langRe.match(lineContent):
+                otherLangMark = False
+                longLine = langRe.match(lineContent).group(1)
+                if longLine != "\"\"":
+                    addInLongDesc(poInfoDict, longDescKey, "en", quotationRe, longLine)
+            elif otherLangRe.match(lineContent):
+                otherLangMark = True
+                longLine = otherLangRe.match(lineContent).group(1)
+                if longLine != "\"\"":
+                    addInLongDesc(poInfoDict, longDescKey, otherLang, quotationRe, longLine)
+            elif longDescRe.match(lineContent):
+                if otherLangMark:
+                    language = otherLang
+                else:
+                    language = "en"
+                addInLongDesc(poInfoDict, longDescKey, language, quotationRe,
+                              longDescRe.match(lineContent).group(0))
+                
+    # print "*** ", poInfoDict
                         
     # Generate .debian file content.
     debFilecontent = headerTemplate % (packageName, packageName)
@@ -121,6 +125,16 @@ def po2deb(poFilepath):
     debFile = open(debFilepath, "w")            
     debFile.write(debFilecontent)
     debFile.close()
+    
+def addInLongDesc(poInfoDict, longDescKey, language, quotationRe, longLine):
+    '''Add in long description.'''
+    # Replace \"foo\" to "foo".
+    longLine = quotationRe.sub("\"", longLine)
+                
+    if not (poInfoDict[language]).has_key(longDescKey):
+        (poInfoDict[language])[longDescKey] = []
+                    
+    (poInfoDict[language])[longDescKey].append(longLine)
     
 def genDescription(lang, docs):
     '''Generate description.'''
@@ -140,17 +154,13 @@ def genDescription(lang, docs):
     # Generate long description.
     longDescKeys = sorted(docs.keys())
     lastLongDescKey = longDescKeys[-1]
+    longDescRe = re.compile("^\"(.*)\"$")
     for longDescKey in longDescKeys:
         # Fill long description.
         longDescList = docs[longDescKey]
         for longDesc in longDescList:
-            splitList = longDesc.split("\\n")
-            if len(splitList) == 2:
-                # If current line end with \n
-                content += " " + splitList[0] + "\n"
-            else:
-                # Otherwise split line.
-                content += " " + longDesc + "\n"
+            splitList = (longDescRe.match(longDesc).group(1)).split("\\n")
+            content += " " + splitList[0] + "\n"
         
         # Fill long description segment.
         if longDescKey != lastLongDescKey:
