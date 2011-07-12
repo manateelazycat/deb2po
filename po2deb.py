@@ -33,7 +33,7 @@ headerTemplate = '''
 '''
 
 def po2deb(poFilepath):
-    '''Convert .po to .debian format.'''
+    '''Convert .po to .deepin format.'''
     # Init rule.
     poRe = re.compile("\.po")
     packageRe = re.compile("([^\.]+)\.po")
@@ -111,17 +111,18 @@ def po2deb(poFilepath):
                 
     # print "*** ", poInfoDict
                         
-    # Generate .debian file content.
+    # Generate .deepin file content.
     debFilecontent = headerTemplate % (packageName, packageName)
     enDocs = poInfoDict.pop("en")
     debFilecontent += genDescription("en", enDocs)
     for (lang, docs) in poInfoDict.items():
         debFilecontent += genDescription(lang, docs)
         
-    # Write content to *.debian file.
-    if not os.path.exists("./lang"):
-        os.makedirs("./lang")
-    debFilepath = "./lang/%s.debian" % (packageName) 
+    # Write content to *.deepin file.
+    debDir = "./" + otherLang
+    if not os.path.exists(debDir):
+        os.makedirs(debDir)
+    debFilepath = "%s/%s.deepin" % (debDir, packageName)
     debFile = open(debFilepath, "w")            
     debFile.write(debFilecontent)
     debFile.close()
@@ -174,4 +175,4 @@ if __name__ == "__main__":
     else:
         print "./po2deb.py foo.po"
 
-#  LocalWords:  Deepin po debian msgctxt msgid msgstr lang
+#  LocalWords:  Deepin po deepin msgctxt msgid msgstr lang

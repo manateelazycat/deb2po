@@ -62,8 +62,8 @@ longTemplate = '''#. Translators: This is the long description part %s.
 def deb2po(debFilepath):
     '''Convert .debian to .po format.'''
     # Init rules.
-    debPo = re.compile("\.debian")
-    packageRe = re.compile("([^\.]+)\.debian")
+    debPo = re.compile("\.(debian|deepin)")
+    packageRe = re.compile("([^\.]+)\.(debian|deepin)")
     langRe = re.compile("-([a-zA-Z_]+).+")
     shortDescRe = re.compile("^Description(-[^:]+)?:\s([^\n]+)")
     longDescRe = re.compile("^ ([^\.][^\n]+)")
