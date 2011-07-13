@@ -46,6 +46,7 @@ def po2deb(poFilepath):
     otherLangRe = re.compile("^msgstr\s+(.*)")
     longDescRe = re.compile("^\"(.*)\"$")
     quotationRe = re.compile(r"\\\"")
+    rx = re.compile(u"([\u2e80-\uffff])", re.UNICODE)
     
     # Get *.po filename.
     poFilename = os.path.basename(poFilepath)    
@@ -95,22 +96,27 @@ def po2deb(poFilepath):
                 otherLangMark = False
                 longLine = langRe.match(lineContent).group(1)
                 if longLine != "\"\"":
-                    addInLongDesc(poInfoDict, longDescKey, "en", quotationRe, longLine)
+                    addInLongDesc(poInfoDict, longDescKey, "en", quotationRe, longDescRe, longLine)
             elif otherLangRe.match(lineContent):
                 otherLangMark = True
                 longLine = otherLangRe.match(lineContent).group(1)
                 if longLine != "\"\"":
-                    addInLongDesc(poInfoDict, longDescKey, otherLang, quotationRe, longLine)
+                    addInLongDesc(poInfoDict, longDescKey, otherLang, quotationRe, longDescRe, longLine)
             elif longDescRe.match(lineContent):
                 if otherLangMark:
                     language = otherLang
                 else:
                     language = "en"
-                addInLongDesc(poInfoDict, longDescKey, language, quotationRe,
+                addInLongDesc(poInfoDict, longDescKey, language, quotationRe, longDescRe,
                               longDescRe.match(lineContent).group(0))
                 
-    # print "*** ", poInfoDict
-                        
+    # Wrap long description.
+    for (lang, docs) in poInfoDict.items():
+        for (descType, descList) in docs.items():
+            if descType != "short":
+                wrapList = map (lambda l: cjkwrap(l, 80, rx), descList)
+                (poInfoDict[lang])[descType] = wrapList
+    
     # Generate .deepin file content.
     debFilecontent = headerTemplate % (packageName, packageName)
     enDocs = poInfoDict.pop("en")
@@ -127,15 +133,38 @@ def po2deb(poFilepath):
     debFile.write(debFilecontent)
     debFile.close()
     
-def addInLongDesc(poInfoDict, longDescKey, language, quotationRe, longLine):
+def cjkwrap(text, width, rx, encoding="utf8"):
+    return reduce(lambda line, word, width=width: '%s%s%s' %              
+                  (line,
+                   [' ','\n ', ''][(len(line)-line.rfind('\n')-1 + len(word.split('\n',1)[0] ) >= width) or
+                                  line[-1:] == '\0' and 2],
+                   word),
+                  rx.sub(r'\1\0 ', unicode(text,encoding)).split(' ')
+                  ).replace('\0', '').encode(encoding)
+
+def addInLongDesc(poInfoDict, longDescKey, language, quotationRe, longDescRe, longLine):
     '''Add in long description.'''
     # Replace \"foo\" to "foo".
     longLine = quotationRe.sub("\"", longLine)
+    
+    # Pick content from "".
+    longLine = longDescRe.match(longLine).group(1)
                 
     if not (poInfoDict[language]).has_key(longDescKey):
         (poInfoDict[language])[longDescKey] = []
-                    
-    (poInfoDict[language])[longDescKey].append(longLine)
+    
+    # Append directly if haven't other long description exists.
+    if len((poInfoDict[language])[longDescKey]) == 0:
+        (poInfoDict[language])[longDescKey].append(longLine)
+    else:
+        lastLine = ((poInfoDict[language])[longDescKey])[-1]
+
+        # Append directly if last long description end with \n.
+        if len(lastLine.split("\\n")) > 1:
+            (poInfoDict[language])[longDescKey].append(longLine)
+        # Otherwise connect current line to the end of last line.
+        else:
+            ((poInfoDict[language])[longDescKey])[-1] = lastLine + longLine
     
 def genDescription(lang, docs):
     '''Generate description.'''
@@ -155,12 +184,11 @@ def genDescription(lang, docs):
     # Generate long description.
     longDescKeys = sorted(docs.keys())
     lastLongDescKey = longDescKeys[-1]
-    longDescRe = re.compile("^\"(.*)\"$")
     for longDescKey in longDescKeys:
         # Fill long description.
         longDescList = docs[longDescKey]
         for longDesc in longDescList:
-            splitList = (longDescRe.match(longDesc).group(1)).split("\\n")
+            splitList = longDesc.split("\\n")
             content += " " + splitList[0] + "\n"
         
         # Fill long description segment.
