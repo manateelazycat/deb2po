@@ -32,7 +32,7 @@ headerTemplate = '''
 # This Description is owned
 '''
 
-def po2deb(poFilepath):
+def po2deb(poFilepath, debianFilepath=""):
     '''Convert .po to .deepin format.'''
     # Init rule.
     poRe = re.compile("\.po")
@@ -47,6 +47,7 @@ def po2deb(poFilepath):
     longDescRe = re.compile("^\"(.*)\"$")
     quotationRe = re.compile(r"\\\"")
     rx = re.compile(u"([\u2e80-\uffff])", re.UNICODE)
+    descRe = re.compile("^Description-")
     
     # Get *.po filename.
     poFilename = os.path.basename(poFilepath)    
@@ -118,29 +119,59 @@ def po2deb(poFilepath):
                 (poInfoDict[lang])[descType] = wrapList
     
     # Generate .deepin file content.
-    debFilecontent = headerTemplate % (packageName, packageName)
-    enDocs = poInfoDict.pop("en")
-    debFilecontent += genDescription("en", enDocs)
+    debFilecontent = ""
     for (lang, docs) in poInfoDict.items():
-        debFilecontent += genDescription(lang, docs)
+        if lang != "en":
+            debFilecontent += genDescription(lang, docs)
         
-    # Write content to *.deepin file.
+    # Open *.deepin file.
     debDir = "./" + otherLang
     if not os.path.exists(debDir):
         os.makedirs(debDir)
     debFilepath = "%s/%s.deepin" % (debDir, packageName)
     debFile = open(debFilepath, "w")            
+    
+    # Write debian content if debianFilepath is not empty.
+    debContent = ""
+    if debianFilepath != "":
+        for line in open(debianFilepath).readlines():
+            if descRe.match(line):
+                break;
+            else:
+                debContent += line
+    if debContent != "":
+        debFile.write(debContent)
+        
+    # Write information that pick from *.po file.
     debFile.write(debFilecontent)
     debFile.close()
     
 def cjkwrap(text, width, rx, encoding="utf8"):
-    return reduce(lambda line, word, width=width: '%s%s%s' %              
-                  (line,
-                   [' ','\n ', ''][(len(line)-line.rfind('\n')-1 + len(word.split('\n',1)[0] ) >= width) or
-                                  line[-1:] == '\0' and 2],
-                   word),
-                  rx.sub(r'\1\0 ', unicode(text,encoding)).split(' ')
-                  ).replace('\0', '').encode(encoding)
+    words = rx.sub(r'\1\0 ', unicode(text,encoding)).split(' ')
+    
+    line = ""
+    for word in words:
+        if len(word) > 0 and word[0] in ["-", "*"]:
+            word = " " + word
+
+        if len(line) - line.rfind("\n") - 1 + len(word.split('\n',1)[0]) >= width:
+            line += "\n " + word
+        else:
+            if rx.match(word) or word == "":
+                if line[-1:] == '\0':
+                    line += word
+                else:
+                    if line != "":
+                        line += " " + word
+                    else:
+                        line += word
+            else:
+                if line != "":
+                    line += " " + word
+                else:
+                    line += word
+            
+    return line.replace('\0', '').encode(encoding)
 
 def addInLongDesc(poInfoDict, longDescKey, language, quotationRe, longDescRe, longLine):
     '''Add in long description.'''
@@ -164,7 +195,11 @@ def addInLongDesc(poInfoDict, longDescKey, language, quotationRe, longDescRe, lo
             (poInfoDict[language])[longDescKey].append(longLine)
         # Otherwise connect current line to the end of last line.
         else:
-            ((poInfoDict[language])[longDescKey])[-1] = lastLine + longLine
+            lastChar = lastLine[-1]
+            if lastChar in [" ", "-"] :
+                ((poInfoDict[language])[longDescKey])[-1] = lastLine + longLine
+            else:
+                ((poInfoDict[language])[longDescKey])[-1] = lastLine + " " + longLine
     
 def genDescription(lang, docs):
     '''Generate description.'''
@@ -198,7 +233,9 @@ def genDescription(lang, docs):
     return content
     
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
+    if len(sys.argv) > 2:
+        po2deb(sys.argv[1], sys.argv[2])
+    elif len(sys.argv) == 2:
         po2deb(sys.argv[1])
     else:
         print "./po2deb.py foo.po"
